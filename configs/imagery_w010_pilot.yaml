@@ -1,0 +1,26 @@
+experiment_root: outputs_new/imagery_w010_subj01_natural_v1
+subject: 1
+stimulus_type: complex
+split_seed: 42
+seed: 42
+knn_trials: 1000
+teacher_val_fraction: 0.1
+logical_batch_size: 36
+examples_per_class: 6
+micro_batch_size: 2  # 保留原始配置字段；实际训练以 GPU 测速记录中的 chosen_microbatch=18 为准。
+max_epochs: 30
+patience: 8
+learning_rate: 0.001
+weight_decay: 0.01
+adapter_hidden_dim: 2048
+adapter_dropout: 0.25
+anclip_weight: 0.1
+temperature: 0.05
+augmentation_noise_scale: 0.02
+num_samples: 3
+num_steps: 38
+generation_seed: 42
+rgb_mode: standard
+cooldown_seconds: 120
+w010_config: outputs_new/w010_multisubject_v1/subj01/configs/w010.yaml
+w010_checkpoint: outputs_new/w010_multisubject_v1/subj01/runs/w010_reused/checkpoints/selected.pt

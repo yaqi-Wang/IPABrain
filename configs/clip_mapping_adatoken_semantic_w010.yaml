@@ -1,0 +1,53 @@
+brainvae_config: configs/brainvae_scheme1_synbrain.yaml
+run_name: adatoken_semantic_w010_v2
+output_root: outputs/adatoken_refinement/semantic_v2
+log_root: logs/adatoken_semantic_v2/w010
+model:
+  type: adatoken_refinement
+  latent_tokens: 256
+  embed_dim: 1664
+  depth: 8
+  num_heads: 13
+  mlp_ratio: 4.0
+  fused_attn: true
+  qk_norm: false
+  gradient_checkpointing: true
+  train_backbone: true
+training:
+  seed: 42
+  batch_size: 12
+  micro_batch_size: 3
+  mixed_precision: fp16
+  allow_tf32: true
+  epochs: 4
+  learning_rate: 1.0e-05
+  weight_decay: 0.01
+  checkpoint_every_steps: 500
+  num_workers: 0
+  encode_batch_size: 2
+  initialize_from: outputs/synbrain_comparison/subj01/runs/adatoken_synbrain_local/checkpoints/best.pt
+  drop_last: true
+validation:
+  selection_metric: token_mse
+  patience: 0
+  min_delta: 1.0e-05
+  batch_size: 12
+  candidate_epochs:
+  - 1
+  - 2
+  - 3
+  - 4
+evaluation:
+  aggregation: mean_fmri
+  encode_batch_size: 2
+  num_samples: 1
+  num_steps: 38
+  seed: 42
+  rgb_mode: standard
+  token_source_tag: nsd250_s1
+  generation_tag: nsd250_s1
+mean_cache_directory: outputs/synbrain_comparison/subj01/runs/tokenformer_synbrain_local/features
+objective:
+  type: generation_contrastive
+  weight: 0.01
+  temperature: 0.125

@@ -1,0 +1,24 @@
+# Install matching CUDA builds of torch and torchvision before these dependencies.
+einops
+fairscale
+fsspec
+h5py
+invisible-watermark
+kornia
+matplotlib
+nibabel
+numpy
+omegaconf
+open-clip-torch
+packaging
+Pillow
+pytorch-lightning
+pytest
+requests
+safetensors
+scipy
+timm
+tqdm
+transformers
+PyYAML
+clip @ git+https://github.com/openai/CLIP.git

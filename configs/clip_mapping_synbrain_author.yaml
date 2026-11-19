@@ -1,0 +1,45 @@
+# Same TokenFormer and internal split as the local route, independent caches/weights.
+brainvae_config: configs/brainvae_scheme1_synbrain.yaml
+brainvae_source: synbrain_external
+# Placeholder chosen by us, not a verified filename on Hugging Face.
+brainvae_checkpoint: checkpoints/synbrain_author/subj01/brainvae.pth
+external_source:
+  subject: 1
+  author_model_config: ""  # Optional downloaded original YAML; checked against all tensor shapes.
+  origin: https://huggingface.co/MichaelMaiii/SynBrain
+  training_data_provenance: author_checkpoint_not_yet_audited
+run_name: tokenformer_synbrain_author
+output_root: outputs/synbrain_comparison
+log_root: logs/clip_mapping_synbrain_author
+model:
+  type: tokenformer
+  latent_tokens: 256
+  embed_dim: 1664
+  hidden_dim: 512
+  depth: 8
+  num_heads: 8
+  mlp_ratio: 4.0
+  dropout: 0.1
+training:
+  seed: 42
+  batch_size: 12
+  epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  checkpoint_every_steps: 100
+  num_workers: 0
+  encode_batch_size: 2
+validation:
+  selection_metric: token_mse
+  patience: 10
+  min_delta: 0.0001
+  batch_size: 12
+evaluation:
+  aggregation: mean_fmri
+  encode_batch_size: 2
+  num_samples: 3
+  num_steps: 38
+  seed: 42
+  rgb_mode: standard
+  token_source_tag: mapped_mean_fmri
+  generation_tag: mapped_mean_fmri_rgb01_s3

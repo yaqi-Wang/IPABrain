@@ -1,0 +1,21 @@
+# Fresh subject-specific Stage1 models for the w010 workflow.
+# Original SynBrain architecture and objective; activation recomputation is disabled.
+base_config: configs/brainvae_synbrain.yaml
+output_root: outputs_new/synbrain_multisubject_v1
+log_root: outputs_new/synbrain_multisubject_v1/logs
+run_name: brainvae_synbrain_local_fast_v1
+model:
+  activation_checkpointing: false
+training:
+  batch_size: 12
+  mixed_precision: bf16
+  allow_tf32: true
+  cudnn_benchmark: true
+  attention_backend: sdpa
+  fused_optimizer: true
+  preload_ram: true
+  num_workers: 2
+  persistent_workers: true
+  prefetch_factor: 2
+  checkpoint_every_steps: 500
+  save_on_signal: true

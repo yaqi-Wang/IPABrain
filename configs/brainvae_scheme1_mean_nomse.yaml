@@ -1,0 +1,45 @@
+# Method 2 source encoder: mean SoftCLIP, reconstruction and KL; no CLIP MSE.
+# Train from scratch in its own run. Do not resume a mean/MSE=100 or MSE=1 run.
+base_config: configs/brainvae.yaml
+run_name: brainvae_mean_nomse
+output_root: outputs/scheme1_direct
+log_root: logs/scheme1_mean_nomse
+data_tag: v1
+model:
+  semantic_source: mean
+  clip_reg_weight: 0.0
+  clip_weight: 1000.0
+  recon_weight: 1.0
+  kl_weight: 0.001
+training:
+  seed: 42
+  batch_size: 12
+  epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.05
+  checkpoint_every_steps: 100
+preprocessing:
+  nsd_stored_divisor: 2000.0
+  common_divisor: 300.0
+  normalization: source_train
+  epsilon: 0.000001
+  chunk_images: 64
+  verify_nsd_sample: true
+validation:
+  fraction: 0.1
+  split_seed: 42
+  average_repeats: true
+  selection_metric: latent_cosine
+  selection_mode: max
+  patience: 10
+  min_delta: 0.0001
+evaluation:
+  aggregation: mean_fmri
+  encode_batch_size: 8
+  num_samples: 3
+  num_steps: 38
+  seed: 42
+  rgb_mode: standard
+  generation_tag: mean_fmri_rgb01_s3
+  token_source_tag: mean_fmri
+  unclip_checkpoint: huggingface/unclip6_epoch0_step110000.ckpt

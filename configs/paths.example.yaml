@@ -1,0 +1,8 @@
+data_root: data/processed
+nsd_root: data/processed/nsd
+imagery_root: data/processed/imagery
+checkpoint_root: checkpoints
+output_root: outputs_new
+raw_nsd_root: data/raw_nsd
+openclip_version: huggingface/open_clip_pytorch_model.bin
+generative-models-path: src/sdxl/generative_models

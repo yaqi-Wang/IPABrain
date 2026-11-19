@@ -1,0 +1,33 @@
+# Method 1: freeze the existing October 9 mean/MSE=100 best.pt.
+brainvae_config: configs/brainvae_scheme1_mean.yaml
+run_name: meanbridge
+output_root: outputs/scheme1_direct
+log_root: logs/clip_mapping_meanbridge
+model:
+  type: meanbridge
+  latent_tokens: 256
+  embed_dim: 1664
+  hidden_dim: 256
+training:
+  seed: 42
+  batch_size: 12
+  epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  checkpoint_every_steps: 100
+  num_workers: 0
+  encode_batch_size: 8
+validation:
+  selection_metric: token_mse
+  patience: 10
+  min_delta: 0.0001
+  batch_size: 12
+evaluation:
+  aggregation: mean_fmri
+  encode_batch_size: 8
+  num_samples: 3
+  num_steps: 38
+  seed: 42
+  rgb_mode: standard
+  token_source_tag: mapped_mean_fmri
+  generation_tag: mapped_mean_fmri_rgb01_s3

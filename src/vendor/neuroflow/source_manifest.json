@@ -1,0 +1,29 @@
+{
+  "repository": "https://github.com/MichaelMaiii/NeuroFlow",
+  "commit": "9aeae32f9f487bde1e45dbd575891d79900b895e",
+  "license": "Apache-2.0",
+  "changes": [
+    "Removed author-specific sys.path append; made vae_module import relative.",
+    "Reused existing identical unclamped DiagonalGaussianDistribution_2D; model operations and checkpoint keys are unchanged."
+  ],
+  "files": [
+    {
+      "upstream_path": "script/vae/vae_module.py",
+      "local_path": "vae_module.py",
+      "upstream_sha256": "d2d791a999a2fd562ddcb15257ebf5795cf59436e1da83e3a43d0ac0520898a1",
+      "local_sha256": "d2d791a999a2fd562ddcb15257ebf5795cf59436e1da83e3a43d0ac0520898a1"
+    },
+    {
+      "upstream_path": "script/vae/neurovae.py",
+      "local_path": "neurovae.py",
+      "upstream_sha256": "aefc8cc57d3b183448faa18e2c64b352bee0de7088bc1aadbf216c537abea61d",
+      "local_sha256": "c4d911127baec25cd0065128fb25d197fcedb4ec880ebe80daf882c96f2947f0"
+    },
+    {
+      "upstream_path": "LICENSE",
+      "local_path": "LICENSE",
+      "upstream_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "local_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+experiment_root: outputs_new/w010_multisubject_v1
+subjects: [1, 2, 3, 4, 5, 6, 7, 8]
+test_max_items: 0  # 0 means every image in this subject's NSD test arrays.
+validation_images: 100
+cooldown_seconds: 120
+cooldown_scope: stage  # stage or subject
+reuse_subj01_head: true
+train_missing_subj08: true
+cleanup_completed_training_state: false
+device: cuda
+seed: 42
+num_steps: 38
+num_samples: 1
+rgb_mode: standard
+selection_policy: fixed_epoch004
+fast_head_training: true

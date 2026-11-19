@@ -1,0 +1,42 @@
+# Per-subject, perception-only training; no imagery adapter or anchor bank.
+base_config: configs/brainvae.yaml
+output_root: outputs/scheme1_direct
+log_root: logs/scheme1_direct
+data_tag: v1
+training:
+  seed: 42
+  # 24 GB GPU: start conservatively; larger batches previously ran out of memory.
+  batch_size: 12
+  epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.05
+  # Resumable last.pt also saves at every epoch boundary and before training.
+  checkpoint_every_steps: 100
+preprocessing:
+  # Existing perception npys were written as raw beta / 2000.
+  nsd_stored_divisor: 2000.0
+  # Convert both perception and raw imagery betas to raw beta / 300.
+  common_divisor: 300.0
+  normalization: source_train
+  epsilon: 0.000001
+  chunk_images: 64
+  verify_nsd_sample: true
+validation:
+  fraction: 0.1
+  split_seed: 42
+  average_repeats: true
+  selection_metric: latent_cosine
+  selection_mode: max
+  patience: 10
+  min_delta: 0.0001
+evaluation:
+  aggregation: mean_fmri
+  encode_batch_size: 8
+  num_samples: 3
+  num_steps: 38
+  seed: 42
+  # Preserve previous legacy-RGB images and reuse their encoded posterior means.
+  rgb_mode: standard
+  generation_tag: mean_fmri_rgb01_s3
+  token_source_tag: mean_fmri
+  unclip_checkpoint: huggingface/unclip6_epoch0_step110000.ckpt
