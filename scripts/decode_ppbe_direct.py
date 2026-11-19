@@ -22,7 +22,7 @@ from src.utils.scheme1_runs import training_directory
 from decode_brainvae_scheme1 import encode_predictions, generate_samples, reconcile_resume_metadata
 from train_brainvae_scheme1 import choose_device
 
-DIRECT_PROTOCOL = "synbrain_direct_mean_nsd_v1"
+DIRECT_PROTOCOL = "ppbe_direct_mean_nsd_v1"
 
 
 def test_dataset(paths, subject, manifest, split, normalizer):
@@ -69,11 +69,11 @@ def source_specification(args, brain_config):
     if args.source == "local":
         return {"brainvae_source": "local"}
     return {
-        "brainvae_source": "synbrain_external",
-        "brainvae_checkpoint": f"checkpoints/synbrain_author/subj{args.subject:02d}/brainvae.pth",
+        "brainvae_source": "ppbe_external",
+        "brainvae_checkpoint": f"checkpoints/ppbe_author/subj{args.subject:02d}/brainvae.pth",
         "external_source": {
             "subject": args.subject, "author_model_config": args.author_config,
-            "origin": "https://huggingface.co/MichaelMaiii/SynBrain",
+            "origin": "https://arxiv.org/abs/2508.10298",
             "training_data_provenance": "author_checkpoint_not_yet_audited",
         },
         "model": {key: brain_config["model"][key] for key in ("latent_tokens", "embed_dim")},
@@ -104,7 +104,7 @@ def decode(args, brain_config, paths, output):
         if device.type != "cuda" and args.device == "auto":
             raise RuntimeError("No GPU for UnCLIP; use --encode-only or explicitly --device cpu")
     run_dir = (training_directory(brain_config, ROOT, args.subject) if args.source == "local" else
-               output / "runs/brainvae_synbrain_author")
+               output / "runs/brainvae_ppbe_author")
     tag = args.eval_tag or f"direct_mean_nsd{args.max_items}_s{args.num_samples}"
     validate_tag(tag)
     directory = run_dir / "evaluation" / tag / "nsd_test"
@@ -160,7 +160,7 @@ def decode(args, brain_config, paths, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", choices=("local", "author"), default="local")
-    parser.add_argument("--config", default="configs/brainvae_scheme1_synbrain.yaml")
+    parser.add_argument("--config", default="configs/brainvae_scheme1_ppbe.yaml")
     parser.add_argument("--subject", type=int, default=1)
     parser.add_argument("--checkpoint", default="", help="Override this source's BrainVAE checkpoint")
     parser.add_argument("--author-config", default="", help="Optional original author model YAML")
@@ -184,8 +184,8 @@ def main():
         parser.error("Subject, counts, threads and batch size must be positive")
     torch.set_num_threads(args.threads)
     config, paths = load_scheme1_config(args.config, ROOT)
-    if config["model"].get("architecture") != "synbrain":
-        parser.error("Use the original-compatible SynBrain configuration")
+    if config["model"].get("architecture") != "ppbe":
+        parser.error("Use the original-compatible PPBE configuration")
     output = resolve_path(config["output_root"], ROOT) / f"subj{args.subject:02d}"
     if args.prepare_only:
         manifest, split, normalizer = load_prepared(data_directory(config, ROOT, args.subject))

@@ -174,7 +174,7 @@ def apply_mask(betas: np.ndarray, mask: np.ndarray) -> np.ndarray:
 def zscore_per_voxel(fmri: np.ndarray, eps: float = 1e-6) -> np.ndarray:
     """Per-voxel z-score across all retained trials.
 
-    Matches the SynBrain / NSD-perception convention: each voxel is centered
+    Matches the PPBE / NSD-perception convention: each voxel is centered
     and scaled by its trial-wise mean and std.
     """
     mean = fmri.mean(axis=0, keepdims=True)

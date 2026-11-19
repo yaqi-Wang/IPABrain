@@ -17,7 +17,7 @@ from src.data.scheme1 import (
     data_directory, load_prepared, load_scheme1_config, resolve_path, validate_tag,
 )
 from src.models.brainvae_factory import build_brainvae
-from src.utils.config import load_yaml
+from src.utils.config import brainvae_architecture, load_yaml
 from src.utils.mapping_precision import predict_mapping
 from src.utils.mapping_objective import mapping_objective
 from src.utils.scheme1_runs import training_directory
@@ -50,13 +50,13 @@ def load_head_source_config(path: str | Path, root: Path):
     config = load_yaml(resolve_path(path, root))
     validate_tag(config["run_name"])
     brain_config, paths = load_scheme1_config(config["brainvae_config"], root)
-    original = brain_config["model"].get("architecture") == "synbrain"
+    original = brain_config["model"].get("architecture") == "ppbe"
     if not original and brain_config["model"].get("semantic_source", "sample") != "mean":
         raise ValueError("These mapping experiments require a mean-supervised BrainVAE config")
-    if config.get("brainvae_source", "local") not in {"local", "synbrain_external", "neuroflow_external"}:
+    if config.get("brainvae_source", "local") not in {"local", "ppbe_external", "neuroflow_external"}:
         raise ValueError("Unknown BrainVAE source kind")
-    if config.get("brainvae_source") == "synbrain_external" and not original:
-        raise ValueError("External SynBrain source requires the original SynBrain architecture")
+    if config.get("brainvae_source") == "ppbe_external" and not original:
+        raise ValueError("External PPBE source requires the original PPBE architecture")
     for key in ("latent_tokens", "embed_dim"):
         if config["model"][key] != brain_config["model"][key]:
             raise ValueError(f"Mapping / BrainVAE dimension mismatch: {key}")
@@ -108,8 +108,8 @@ def load_brain_source(config: dict, brain_config: dict, root: Path, subject: int
     if config.get("brainvae_source") == "neuroflow_external":
         from src.utils.neuroflow_checkpoint import load_external_neuroflow_source
         return load_external_neuroflow_source(config, brain_config, root, subject, checkpoint_override)
-    if config.get("brainvae_source") == "synbrain_external":
-        return load_external_synbrain_source(config, brain_config, root, subject, checkpoint_override)
+    if config.get("brainvae_source") == "ppbe_external":
+        return load_external_ppbe_source(config, brain_config, root, subject, checkpoint_override)
     requested = checkpoint_override or config.get("brainvae_checkpoint", "")
     checkpoint_path = (resolve_path(requested, root) if requested else
                        training_directory(brain_config, root, subject) / "checkpoints/best.pt")
@@ -119,7 +119,10 @@ def load_brain_source(config: dict, brain_config: dict, root: Path, subject: int
     protocol = checkpoint.get("protocol_metadata", {})
     if protocol.get("protocol") != PROTOCOL or protocol.get("subject") != subject:
         raise ValueError("Source BrainVAE protocol / subject mismatch")
-    if checkpoint["config"] != brain_config["model"]:
+    checkpoint_config = checkpoint["config"]
+    if "architecture" in checkpoint_config:
+        checkpoint_config = {**checkpoint_config, "architecture": brainvae_architecture(checkpoint_config)}
+    if checkpoint_config != brain_config["model"]:
         raise ValueError("Source BrainVAE model/loss config mismatch; use the checkpoint trained for this method")
     prepared = Path(protocol["prepared_data"])
     manifest, split, prepared_normalizer = load_prepared(prepared)
@@ -150,10 +153,10 @@ def load_brain_source(config: dict, brain_config: dict, root: Path, subject: int
             "split": split, "normalizer": normalizer, "prepared": prepared}
 
 
-def load_external_synbrain_source(config: dict, brain_config: dict, root: Path, subject: int,
+def load_external_ppbe_source(config: dict, brain_config: dict, root: Path, subject: int,
                                  checkpoint_override: str = "") -> dict:
-    from src.utils.synbrain_checkpoint import (
-        external_model_config, read_synbrain_checkpoint, validate_synbrain_weights,
+    from src.utils.ppbe_checkpoint import (
+        external_model_config, read_ppbe_checkpoint, validate_ppbe_weights,
     )
     specification = config.get("external_source", {})
     if specification.get("subject") != subject:
@@ -170,12 +173,12 @@ def load_external_synbrain_source(config: dict, brain_config: dict, root: Path, 
     if manifest["subject"] != subject or normalizer.normalization != "beta_scale":
         raise ValueError("Author BrainVAE requires matching-subject beta_scale prepared data")
     if normalizer.common_divisor != 2000 or normalizer.nsd_scale != 1:
-        raise ValueError("The published SynBrain input uses beta/2000; do not apply source-train z-scores")
+        raise ValueError("The published PPBE input uses beta/2000; do not apply source-train z-scores")
     if manifest.get("source_sample_check", {}).get("status") != "verified":
         raise ValueError("Verify raw NSD beta scale and full XYZ voxel order before loading author weights")
     if manifest.get("voxel_order") != "native_XYZ_mask_C_order":
         raise ValueError("Unexpected author-input voxel ordering")
-    weights, metadata = read_synbrain_checkpoint(checkpoint_path)
+    weights, metadata = read_ppbe_checkpoint(checkpoint_path)
     if "subject" in metadata and int(metadata["subject"]) != subject:
         raise ValueError("The checkpoint's subject differs from the declared author source")
     config_path = specification.get("author_model_config", "")
@@ -183,8 +186,8 @@ def load_external_synbrain_source(config: dict, brain_config: dict, root: Path, 
     model_config = external_model_config(weights, brain_config["model"], author_config)
     if any(model_config[key] != config["model"][key] for key in ("latent_tokens", "embed_dim")):
         raise ValueError("Author posterior dimensions differ from the requested CLIP mapping head")
-    validate_synbrain_weights(weights, model_config)
-    identity = {"protocol": MAPPING_PROTOCOL, "source_kind": "synbrain_external", "subject": subject,
+    validate_ppbe_weights(weights, model_config)
+    identity = {"protocol": MAPPING_PROTOCOL, "source_kind": "ppbe_external", "subject": subject,
                 "brainvae_checkpoint": str(checkpoint_path.resolve()),
                 "brainvae_checkpoint_sha256": file_sha256(checkpoint_path),
                 "brainvae_model_config": model_config, "data_fingerprint": manifest["data_fingerprint"],

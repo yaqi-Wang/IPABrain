@@ -2,7 +2,7 @@
 
 The upstream preparation normalizes all 750 unlabeled trials in each session,
 including held-out fMRI. It does not use image features. This is intentionally
-different from the local SynBrain beta/2000 and training-only z-score protocols.
+different from the local PPBE beta/2000 and training-only z-score protocols.
 """
 from __future__ import annotations
 

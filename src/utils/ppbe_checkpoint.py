@@ -10,7 +10,7 @@ from src.models.brainvae_factory import build_brainvae
 from src.utils.config import load_yaml
 
 
-def read_synbrain_checkpoint(path: Path) -> tuple[dict, dict]:
+def read_ppbe_checkpoint(path: Path) -> tuple[dict, dict]:
     payload = torch.load(path, map_location="cpu", weights_only=False)
     if not isinstance(payload, Mapping):
         raise ValueError("BrainVAE checkpoint must be a state dictionary or a dictionary containing model")
@@ -50,8 +50,8 @@ def checkpoint_dimensions(weights: dict) -> dict:
 
 def external_model_config(weights: dict, default_config: dict, author_config: Path | None = None) -> dict:
     config = {**default_config, "ddconfig": dict(default_config["ddconfig"])}
-    if config.get("architecture") != "synbrain":
-        raise ValueError("External SynBrain checkpoints require architecture=synbrain")
+    if config.get("architecture") != "ppbe":
+        raise ValueError("External PPBE checkpoints require architecture=ppbe")
     dimensions = checkpoint_dimensions(weights)
     if author_config is not None:
         author = load_yaml(author_config)
@@ -66,7 +66,7 @@ def external_model_config(weights: dict, default_config: dict, author_config: Pa
     return config
 
 
-def validate_synbrain_weights(weights: dict, model_config: dict) -> None:
+def validate_ppbe_weights(weights: dict, model_config: dict) -> None:
     try:
         with torch.device("meta"):
             expected = build_brainvae(model_config).state_dict()
@@ -78,7 +78,7 @@ def validate_synbrain_weights(weights: dict, model_config: dict) -> None:
     mismatched = [f"{key}: {tuple(weights[key].shape)} != {tuple(expected[key].shape)}"
                   for key in expected.keys() & weights.keys() if weights[key].shape != expected[key].shape]
     if missing or unexpected or mismatched:
-        raise ValueError(f"Strict SynBrain compatibility failed; missing={missing[:8]}, "
+        raise ValueError(f"Strict PPBE compatibility failed; missing={missing[:8]}, "
                          f"unexpected={unexpected[:8]}, shapes={mismatched[:8]}. "
                          "Use the original model/config; incompatible layers are never skipped.")
     for key, value in weights.items():

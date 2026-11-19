@@ -1,4 +1,4 @@
-"""Author NeuroFlow checkpoint and preprocessing identity, separate from SynBrain."""
+"""Author NeuroFlow checkpoint and preprocessing identity, separate from PPBE."""
 from __future__ import annotations
 
 import json

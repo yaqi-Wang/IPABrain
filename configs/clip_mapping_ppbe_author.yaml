@@ -1,16 +1,16 @@
 # Same TokenFormer and internal split as the local route, independent caches/weights.
-brainvae_config: configs/brainvae_scheme1_synbrain.yaml
-brainvae_source: synbrain_external
+brainvae_config: configs/brainvae_scheme1_ppbe.yaml
+brainvae_source: ppbe_external
 # Placeholder chosen by us, not a verified filename on Hugging Face.
-brainvae_checkpoint: checkpoints/synbrain_author/subj01/brainvae.pth
+brainvae_checkpoint: checkpoints/ppbe_author/subj01/brainvae.pth
 external_source:
   subject: 1
   author_model_config: ""  # Optional downloaded original YAML; checked against all tensor shapes.
-  origin: https://huggingface.co/MichaelMaiii/SynBrain
+  origin: https://arxiv.org/abs/2508.10298
   training_data_provenance: author_checkpoint_not_yet_audited
-run_name: tokenformer_synbrain_author
-output_root: outputs/synbrain_comparison
-log_root: logs/clip_mapping_synbrain_author
+run_name: tokenformer_ppbe_author
+output_root: outputs/ppbe_comparison
+log_root: logs/clip_mapping_ppbe_author
 model:
   type: tokenformer
   latent_tokens: 256

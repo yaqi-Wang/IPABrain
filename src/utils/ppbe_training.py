@@ -1,17 +1,17 @@
-"""Opt-in execution improvements for fresh SynBrain training runs."""
+"""Opt-in execution improvements for fresh PPBE training runs."""
 from __future__ import annotations
 
 import numpy as np
 import torch
 
-from src.models.synbrain_blocks import AttnBlock
+from src.models.ppbe_blocks import AttnBlock
 from src.models.brainvae_clip_encoder import SDPAAttnBlock
 
 
-def configure_synbrain_execution(model, training):
+def configure_ppbe_execution(model, training):
     backend = training.get("attention_backend", "original")
     if backend not in {"original", "sdpa"}:
-        raise ValueError(f"Unknown SynBrain attention backend: {backend}")
+        raise ValueError(f"Unknown PPBE attention backend: {backend}")
     if backend == "sdpa":
         replacements = 0
         for name, module in list(model.named_modules()):
@@ -24,7 +24,7 @@ def configure_synbrain_execution(model, training):
                 setattr(model.get_submodule(parent), child, replacement)
                 replacements += 1
         if not replacements:
-            raise ValueError("SDPA was requested but no SynBrain attention blocks were found")
+            raise ValueError("SDPA was requested but no PPBE attention blocks were found")
     return backend
 
 

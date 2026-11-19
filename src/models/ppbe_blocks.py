@@ -1,6 +1,6 @@
-"""SynBrain's original 1-D VAE blocks, isolated from unused Lightning/LDM imports.
+"""One-dimensional VAE blocks adapted from Mai et al. for the perceptual encoder.
 
-Source: https://github.com/MichaelMaiii/SynBrain/blob/main/src/vae/module.py
+Source: https://arxiv.org/abs/2508.10298
 Extracted from the existing src/vae/module.py copy. Parameter names and forward
 operations are preserved, including vanilla attention and align_corners=True.
 The AMP attention core uses FP32 to avoid overflow in the unscaled QK product;

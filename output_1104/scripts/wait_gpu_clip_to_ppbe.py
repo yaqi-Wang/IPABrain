@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wait for the full multisubject queue and an idle GPU before CLIP-to-SynBrain."""
+"""Wait for the full multisubject queue and an idle GPU before CLIP-to-PPBE."""
 from __future__ import annotations
 import argparse
 import fcntl
@@ -15,8 +15,8 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKER = ROOT / 'output_1104/scripts/train_clip_to_synbrain.py'
-DEFAULT_OUTPUT = 'output_1104/clip_to_synbrain_conditional_v1'
+WORKER = ROOT / 'output_1104/scripts/train_clip_to_ppbe.py'
+DEFAULT_OUTPUT = 'output_1104/clip_to_ppbe_conditional_v1'
 DEFAULT_PREDECESSOR = ROOT / 'output_1104/multisubject_linear_imagery_v1'
 EXPECTED_PROTOCOL = 'subj01_08_w010_mu_mse_linear_3samples_v1'
 METRICS = ('PixCorr', 'SSIM', 'Alex2_2way', 'Alex5_2way', 'Incep_2way',

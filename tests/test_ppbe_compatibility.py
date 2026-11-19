@@ -27,14 +27,14 @@ from src.data.scheme1 import (
 from src.ldm.modules.distributions.distributions import DiagonalGaussianDistribution_2D
 from src.models.brainvae_factory import build_brainvae
 from src.utils.clip_mapping import frozen_brain, load_brain_source, load_mapping_config
-from src.utils.synbrain_checkpoint import (
-    external_model_config, read_synbrain_checkpoint, validate_synbrain_weights,
+from src.utils.ppbe_checkpoint import (
+    external_model_config, read_ppbe_checkpoint, validate_ppbe_weights,
 )
 from train_brainvae_scheme1 import kl_weight_for_epoch
 
 
 def tiny_config(checkpointing=False):
-    return {"architecture": "synbrain", "latent_tokens": 2, "embed_dim": 3,
+    return {"architecture": "ppbe", "latent_tokens": 2, "embed_dim": 3,
             "hidden_channels": 4, "hidden_dim": 8, "linear_dim": 8,
             "clip_weight": 10.0, "kl_weight": 0.001, "activation_checkpointing": checkpointing,
             "semantic_source": "sample", "free_bits": 0.0, "clip_reg_weight": 0.0, "recon_weight": 1.0,
@@ -59,7 +59,7 @@ def upstream_class():
     return namespace["BrainVAE"]
 
 
-class TestSynBrainParity(unittest.TestCase):
+class TestPPBEParity(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         torch.set_num_threads(1)
@@ -118,15 +118,15 @@ class TestSynBrainParity(unittest.TestCase):
         self.assertEqual(float(model.encode(torch.randn(2, 10)).logvar.min()), 21)
 
     def test_project_configs_and_constant_original_kl_are_preserved(self):
-        original, _ = load_scheme1_config("configs/brainvae_scheme1_synbrain.yaml", ROOT)
+        original, _ = load_scheme1_config("configs/brainvae_scheme1_ppbe.yaml", ROOT)
         current, _ = load_scheme1_config("configs/brainvae_scheme1_mean_nomse.yaml", ROOT)
         self.assertEqual(current["model"]["ddconfig"]["mid_attn_type"], "linear")
         self.assertEqual(current["model"]["semantic_source"], "mean")
         self.assertEqual(current["preprocessing"]["normalization"], "source_train")
         for epoch in (0, 1, 5, 29):
             self.assertEqual(kl_weight_for_epoch(epoch, original), 0.001)
-        local, _, _ = load_mapping_config("configs/clip_mapping_synbrain_local.yaml", ROOT)
-        author, _, _ = load_mapping_config("configs/clip_mapping_synbrain_author.yaml", ROOT)
+        local, _, _ = load_mapping_config("configs/clip_mapping_ppbe_local.yaml", ROOT)
+        author, _, _ = load_mapping_config("configs/clip_mapping_ppbe_author.yaml", ROOT)
         for key in ("model", "training", "validation", "evaluation"):
             self.assertEqual(local[key], author[key])
         self.assertNotEqual(local["run_name"], author["run_name"])
@@ -157,29 +157,29 @@ class TestSynBrainParity(unittest.TestCase):
             for payload in ({"model": prefixed, "epoch": 3}, {"state_dict": state},
                             {"model_state_dict": state}, state):
                 torch.save(payload, path)
-                weights, _ = read_synbrain_checkpoint(path)
-                validate_synbrain_weights(weights, tiny_config())
+                weights, _ = read_ppbe_checkpoint(path)
+                validate_ppbe_weights(weights, tiny_config())
                 model.load_state_dict(weights, strict=True)
             bad = dict(state)
             bad.pop("encoder.mid.attn_1.q.weight")
             with self.assertRaisesRegex(ValueError, "missing"):
-                validate_synbrain_weights(bad, tiny_config())
+                validate_ppbe_weights(bad, tiny_config())
             bad = {**state, "decoder.extra.weight": torch.ones(1)}
             with self.assertRaisesRegex(ValueError, "unexpected"):
-                validate_synbrain_weights(bad, tiny_config())
+                validate_ppbe_weights(bad, tiny_config())
             incompatible = copy.deepcopy(tiny_config())
             incompatible["ddconfig"]["ada_length"] = 8
             with self.assertRaisesRegex(ValueError, "matching ddconfig"):
-                validate_synbrain_weights(state, incompatible)
+                validate_ppbe_weights(state, incompatible)
             supplied = Path(directory) / "author.yaml"
             supplied.write_text(yaml.safe_dump({"model": {"params": {"ddconfig": tiny_config()["ddconfig"]}}}))
-            validate_synbrain_weights(state, external_model_config(state, incompatible, supplied))
+            validate_ppbe_weights(state, external_model_config(state, incompatible, supplied))
             torch.save({"model": {"input_projection.weight": torch.ones(3, 3)}}, path)
             with self.assertRaisesRegex(ValueError, "Stage1"):
-                read_synbrain_checkpoint(path)
+                read_ppbe_checkpoint(path)
 
 
-class TestSynBrainPipeline(unittest.TestCase):
+class TestPPBEPipeline(unittest.TestCase):
     def test_real_training_resume_and_external_frozen_mapping(self):
         """Small CPU fixture uses actual scripts/data; no experiment files touched."""
         with tempfile.TemporaryDirectory() as temporary:
@@ -202,7 +202,7 @@ class TestSynBrainPipeline(unittest.TestCase):
             paths.write_text(yaml.safe_dump({"nsd_root": str(root / "nsd"), "data_root": str(root),
                                             "imagery_root": str(root), "checkpoint_root": str(root),
                                             "output_root": str(root / "outputs")}))
-            base, _ = load_scheme1_config("configs/brainvae_scheme1_synbrain.yaml", ROOT)
+            base, _ = load_scheme1_config("configs/brainvae_scheme1_ppbe.yaml", ROOT)
             base["model"] = tiny_config(True)
             base.update({"paths": str(paths), "output_root": str(root / "outputs"), "run_name": "original"})
             base.pop("paths_config", None)
@@ -249,12 +249,12 @@ class TestSynBrainPipeline(unittest.TestCase):
             author = root / "author.pth"
             torch.save({"model": {"module." + k: v for k, v in saved["model"].items()}, "epoch": 4}, author)
             # Direct decoding must work before any prediction head exists.
-            run("decode_synbrain_direct.py", config_path, "--source", "local", "--max-items", "2",
+            run("decode_ppbe_direct.py", config_path, "--source", "local", "--max-items", "2",
                 "--encode-only")
-            run("decode_synbrain_direct.py", config_path, "--source", "author", "--checkpoint", str(author),
+            run("decode_ppbe_direct.py", config_path, "--source", "author", "--checkpoint", str(author),
                 "--max-items", "2", "--encode-only")
             direct_local = local_dir / "evaluation/direct_mean_nsd2_s1/nsd_test"
-            direct_author = root / "outputs/subj01/runs/brainvae_synbrain_author/evaluation/direct_mean_nsd2_s1/nsd_test"
+            direct_author = root / "outputs/subj01/runs/brainvae_ppbe_author/evaluation/direct_mean_nsd2_s1/nsd_test"
             local_metadata = json.loads((direct_local / "metadata.json").read_text())
             author_metadata = json.loads((direct_author / "metadata.json").read_text())
             self.assertIsNone(local_metadata["mapping_head"])
@@ -266,10 +266,10 @@ class TestSynBrainPipeline(unittest.TestCase):
             self.assertEqual(local_tokens["records"], author_tokens["records"])
             torch.testing.assert_close(local_tokens["mean"], author_tokens["mean"], rtol=0, atol=0)
             before_tokens = file_sha256(direct_local / "tokens/chunk00000.pt")
-            run("decode_synbrain_direct.py", config_path, "--source", "local", "--max-items", "2",
+            run("decode_ppbe_direct.py", config_path, "--source", "local", "--max-items", "2",
                 "--encode-only", "--resume")
             self.assertEqual(file_sha256(direct_local / "tokens/chunk00000.pt"), before_tokens)
-            mapping, _, _ = load_mapping_config("configs/clip_mapping_synbrain_author.yaml", ROOT)
+            mapping, _, _ = load_mapping_config("configs/clip_mapping_ppbe_author.yaml", ROOT)
             mapping.update({"brainvae_config": str(config_path), "brainvae_checkpoint": str(author),
                             "run_name": "author_head", "output_root": str(root / "outputs")})
             mapping["model"] = {"type": "meanbridge", "latent_tokens": 2, "embed_dim": 3, "hidden_dim": 4}
@@ -291,7 +291,7 @@ class TestSynBrainPipeline(unittest.TestCase):
             head_dir = root / "outputs/subj01/runs/author_head"
             head = torch.load(head_dir / "checkpoints/best.pt", weights_only=False)
             self.assertTrue(head["protocol_metadata"]["brainvae_frozen"])
-            self.assertEqual(head["protocol_metadata"]["source_identity"]["source_kind"], "synbrain_external")
+            self.assertEqual(head["protocol_metadata"]["source_identity"]["source_kind"], "ppbe_external")
             self.assertTrue((head_dir / "features/posterior_means.npy").is_file())
             self.assertEqual(file_sha256(local_dir / "checkpoints/best.pt"), before)
             run("train_clip_mapping.py", mapping_path, "--resume")
@@ -309,20 +309,20 @@ class TestSynBrainPipeline(unittest.TestCase):
             self.assertEqual((head_dir / "evaluation/mapped_mean_fmri/nsd_test/metadata.json").read_bytes(), original_metadata)
 
 
-class TestSynBrainRunner(unittest.TestCase):
+class TestPPBERunner(unittest.TestCase):
     def test_local_source_head_sequence_and_author_never_trains_encoder(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "scripts").mkdir()
-            runner = root / "scripts/run_synbrain_comparison.sh"
-            shutil.copyfile(ROOT / "scripts/run_synbrain_comparison.sh", runner)
+            runner = root / "scripts/run_ppbe_comparison.sh"
+            shutil.copyfile(ROOT / "scripts/run_ppbe_comparison.sh", runner)
             trace = root / "trace.txt"
             executable = root / "python-mock"
             executable.write_text("#!/usr/bin/env bash\n"
-                                  "printf '%s\\n' \"$*\" >> \"$SYNBRAIN_TEST_TRACE\"\n"
-                                  "if [[ ${SYNBRAIN_FAIL_PREP:-0} == 1 && $* == *prepare_scheme1_data.py* ]]; then exit 7; fi\n")
+                                  "printf '%s\\n' \"$*\" >> \"$PPBE_TEST_TRACE\"\n"
+                                  "if [[ ${PPBE_FAIL_PREP:-0} == 1 && $* == *prepare_scheme1_data.py* ]]; then exit 7; fi\n")
             executable.chmod(0o755)
-            environment = {**os.environ, "SYNBRAIN_PYTHON": str(executable), "SYNBRAIN_TEST_TRACE": str(trace)}
+            environment = {**os.environ, "PPBE_PYTHON": str(executable), "PPBE_TEST_TRACE": str(trace)}
             def run(source, stage="train", env=None):
                 return subprocess.run(["bash", str(runner), source, stage, "1", "cpu"],
                                       env=env or environment, capture_output=True, text=True, timeout=10)
@@ -333,7 +333,7 @@ class TestSynBrainRunner(unittest.TestCase):
             for call, script in zip(calls, ("prepare_scheme1_data.py", "train_brainvae_scheme1.py", "train_clip_mapping.py")):
                 self.assertIn(script, call)
             trace.unlink()
-            custom = {**environment, "SYNBRAIN_AUTHOR_CHECKPOINT": "/tmp/downloaded BrainVAE.pth"}
+            custom = {**environment, "PPBE_AUTHOR_CHECKPOINT": "/tmp/downloaded BrainVAE.pth"}
             result = run("author", env=custom)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             calls = trace.read_text().splitlines()
@@ -341,12 +341,12 @@ class TestSynBrainRunner(unittest.TestCase):
             self.assertNotIn("train_brainvae_scheme1.py", "\n".join(calls))
             self.assertIn("--brainvae-checkpoint /tmp/downloaded BrainVAE.pth", calls[1])
             trace.unlink()
-            result = run("local", env={**environment, "SYNBRAIN_FAIL_PREP": "1"})
+            result = run("local", env={**environment, "PPBE_FAIL_PREP": "1"})
             self.assertEqual(result.returncode, 7)
             self.assertEqual(len(trace.read_text().splitlines()), 1)
 
     def test_author_brain_stage_is_rejected(self):
-        result = subprocess.run(["bash", str(ROOT / "scripts/run_synbrain_comparison.sh"), "author", "brain"],
+        result = subprocess.run(["bash", str(ROOT / "scripts/run_ppbe_comparison.sh"), "author", "brain"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 2)
 

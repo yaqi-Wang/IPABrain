@@ -109,7 +109,7 @@ class TokenFormerDualHead(TokenFormer):
 
 
 class AdaToken(nn.Module):
-    """SynBrain's SiT backbone used in the mean-to-CLIP direction.
+    """SiT-based mapping from perceptual posterior means to CLIP features.
 
     This follows its x-prediction launcher: t=0, adaLN-Zero, direct output,
     and no external mean residual. It starts at zero, rather than identity.

@@ -42,7 +42,7 @@ def extract_split(embedder, loader, device: str) -> tuple[np.ndarray, np.ndarray
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Extract SynBrain-style SDXL/OpenCLIP CLIP-Vision features.")
+    parser = argparse.ArgumentParser(description="Extract PPBE-style SDXL/OpenCLIP CLIP-Vision features.")
     parser.add_argument("--paths", default="configs/paths.example.yaml")
     parser.add_argument("--subject", type=int, required=True)
     parser.add_argument("--nsd-root", type=Path, default=None)

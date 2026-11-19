@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from src.utils.config import load_config, load_yaml
+from src.utils.config import brainvae_architecture, load_config, load_yaml
 from src.utils.paths import ProjectPaths
 
 PROTOCOL = "scheme1_perception_only_direct_v1"
@@ -47,13 +47,15 @@ def load_scheme1_config(path: str | Path, root: Path) -> tuple[dict, ProjectPath
     if "paths" in override:
         config["paths_config"] = load_yaml(resolve_path(override["paths"], root))
     normalization = config["preprocessing"]["normalization"]
-    architecture = config["model"].get("architecture", "project")
+    architecture = brainvae_architecture(config["model"])
+    if "architecture" in config["model"]:
+        config["model"]["architecture"] = architecture
     if normalization not in {"source_train", "beta_scale"}:
         raise ValueError("Normalization must be source_train or beta_scale")
-    if normalization == "beta_scale" and architecture != "synbrain":
-        raise ValueError("beta_scale is reserved for the original SynBrain experiment")
-    if architecture == "synbrain" and normalization != "beta_scale":
-        raise ValueError("Original SynBrain requires beta_scale input, without voxel z-scoring")
+    if normalization == "beta_scale" and architecture != "ppbe":
+        raise ValueError("beta_scale is reserved for the original PPBE experiment")
+    if architecture == "ppbe" and normalization != "beta_scale":
+        raise ValueError("Original PPBE requires beta_scale input, without voxel z-scoring")
     return config, ProjectPaths.from_mapping(config["paths_config"], root)
 
 

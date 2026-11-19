@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Compare CLIP-Vision -> frozen SynBrain mean mappers on a subject.
+"""Compare CLIP-Vision -> frozen PPBE mean mappers on a subject.
 
 Train/validation split is the source BrainVAE's image-level NSD train split;
 NSD test is only accessed after selection. No test images train the mapper.
@@ -23,14 +23,14 @@ from src.models.clip_to_brain_mappers import build_mapper
 from src.utils.clip_mapping import (atomic_json, frozen_brain, load_brain_source,
                                     load_head_source_config, mapping_lock, source_nsd_dataset)
 from src.utils.mapping_precision import mapping_autocast, mapping_scaler
-from src.utils.synbrain_training import configure_synbrain_execution
+from src.utils.ppbe_training import configure_ppbe_execution
 from src.utils.timed_cooldown import TimedCooldown
 
 
 def setup(args):
     cfg, brain_cfg, paths = load_head_source_config(args.source_config, ROOT)
-    if brain_cfg['model'].get('architecture') != 'synbrain':
-        raise ValueError('A SynBrain source configuration is required')
+    if brain_cfg['model'].get('architecture') != 'ppbe':
+        raise ValueError('A PPBE source configuration is required')
     source = load_brain_source(cfg, brain_cfg, ROOT, args.subject, args.brainvae_checkpoint)
     if source['identity'].get('source_debug_training'):
         raise ValueError('Refusing a debug-trained BrainVAE checkpoint')
@@ -104,7 +104,7 @@ def train(kind, source, data, shape, args, out, device, identity, warmstart=None
     if device.type == 'cuda': torch.cuda.manual_seed_all(args.seed)
     mapper = build_mapper(kind, tokens=shape[0], dim=shape[1], mlp_hidden=args.mlp_hidden).to(device)
     brain = frozen_brain(source, device)
-    configure_synbrain_execution(brain, {'attention_backend':'sdpa'})
+    configure_ppbe_execution(brain, {'attention_backend':'sdpa'})
     optimizer = torch.optim.AdamW(mapper.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scaler = mapping_scaler(device, args.precision)
     if args.precision == 'fp16': scaler = torch.amp.GradScaler('cuda', init_scale=1.)
@@ -195,9 +195,9 @@ def train(kind, source, data, shape, args, out, device, identity, warmstart=None
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--subject',type=int,default=1,choices=range(1,9))
-    p.add_argument('--source-config',default='configs/clip_mapping_synbrain_local_adatoken.yaml')
+    p.add_argument('--source-config',default='configs/clip_mapping_ppbe_local_adatoken.yaml')
     p.add_argument('--brainvae-checkpoint',default='')
-    p.add_argument('--output',default='output_1104/clip_to_synbrain_conditional_v1')
+    p.add_argument('--output',default='output_1104/clip_to_ppbe_conditional_v1')
     p.add_argument('--methods',nargs='+',choices=['s2n','linear','mlp'],default=['s2n','linear','mlp'])
     p.add_argument('--epochs',type=int,default=30); p.add_argument('--batch-size',type=int,default=1)
     p.add_argument('--lr',type=float,default=1e-4); p.add_argument('--weight-decay',type=float,default=.01)
@@ -216,7 +216,7 @@ def main():
     source,data,shape=setup(args)
     imagery=None; imagery_identity=None; image_splits=None; split_info=None
     if not args.skip_imagery:
-        from clip_to_synbrain_imagery_data import imagery_pairs, stratified_image_split
+        from clip_to_ppbe_imagery_data import imagery_pairs, stratified_image_split
         _, _, paths = load_head_source_config(args.source_config, ROOT)
         imagery,imagery_identity=imagery_pairs(source,paths,args.subject)
         image_splits,split_info=stratified_image_split(imagery,args.seed)

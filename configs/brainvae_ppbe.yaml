@@ -1,7 +1,7 @@
 # Independent original-architecture run. Existing BrainVAE configs are unchanged.
 paths: configs/paths.example.yaml
 model:
-  architecture: synbrain
+  architecture: ppbe
   latent_tokens: 256
   embed_dim: 1664
   hidden_channels: 128
@@ -58,10 +58,10 @@ preprocessing:
   epsilon: 0.000001
   chunk_images: 64
   verify_nsd_sample: true
-run_name: brainvae_synbrain_local
-output_root: outputs/synbrain_comparison
-log_root: logs/brainvae_synbrain_local
-data_tag: synbrain_beta2000_v1
+run_name: brainvae_ppbe_local
+output_root: outputs/ppbe_comparison
+log_root: logs/brainvae_ppbe_local
+data_tag: ppbe_beta2000_v1
 evaluation:
   aggregation: mean_fmri
   encode_batch_size: 2

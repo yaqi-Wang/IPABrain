@@ -25,7 +25,7 @@ from src.models.brainvae_factory import build_brainvae
 from src.utils.seed import seed_everything
 from src.utils.mapping_precision import mapping_autocast, mapping_scaler
 from src.utils.scheme1_runs import training_directory, training_identity
-from src.utils.synbrain_training import configure_synbrain_execution, preload_shared_arrays
+from src.utils.ppbe_training import configure_ppbe_execution, preload_shared_arrays
 
 
 def capture_rng_state() -> dict:
@@ -187,7 +187,7 @@ def main() -> None:
     train_loader = DataLoader(train, shuffle=True, generator=train_generator, **loader_kwargs)
     val_loader = DataLoader(val, shuffle=False, generator=torch.Generator().manual_seed(args.seed), **loader_kwargs)
     model = build_brainvae(config["model"]).to(device)
-    attention_backend = configure_synbrain_execution(model, config['training'])
+    attention_backend = configure_ppbe_execution(model, config['training'])
     loss_definition = {"semantic_source": model.semantic_source, "clip_reg_weight": model.clip_reg_weight,
                        "clip_reg_reduction": "mean_raw_token_coordinates", "clip_weight": model.clip_weight,
                        "recon_weight": model.recon_weight, "recon_reduction": "sum_voxels_mean_batch",
@@ -232,8 +232,8 @@ def main() -> None:
                 "loss_definition": loss_definition,
                 "preprocessing_sha256": manifest["artifact_sha256"]["preprocessing.npz"]}
     numerical_policy = {'mixed_precision': precision}
-    if config['model'].get('architecture') == 'synbrain':
-        numerical_policy['synbrain_attention_core'] = ('sdpa_single_head_v1' if attention_backend == 'sdpa'
+    if config['model'].get('architecture') == 'ppbe':
+        numerical_policy['ppbe_attention_core'] = ('sdpa_single_head_v1' if attention_backend == 'sdpa'
             else 'fp32_qk_softmax_value_v1' if precision in ('fp16', 'bf16') else 'original_fp32')
     protocol['numerical_policy'] = numerical_policy
     checkpoint_dir = run_dir / "checkpoints"
@@ -282,8 +282,8 @@ def main() -> None:
         rng_to_restore = state["rng_state"]
         protocol = dict(previous)  # Keep original training provenance and record numerical fixes.
         previous_policy = previous.get('numerical_policy')
-        if previous_policy is None and config['model'].get('architecture') == 'synbrain' and precision == 'fp16':
-            previous_policy = {'mixed_precision': precision, 'synbrain_attention_core': 'legacy_fp16'}
+        if previous_policy is None and config['model'].get('architecture') == 'ppbe' and precision == 'fp16':
+            previous_policy = {'mixed_precision': precision, 'ppbe_attention_core': 'legacy_fp16'}
         if previous_policy is not None and previous_policy != numerical_policy:
             recovery = {'from_global_step': state['global_step'], 'epoch': state['epoch_index'] + 1,
                         'saved_batch': state['next_batch'], 'previous_policy': previous_policy,
@@ -305,7 +305,7 @@ def main() -> None:
                   f"global_step={state['global_step']} checkpoint={checkpoint_dir / 'last.pt'}", flush=True)
         del saved
     else:
-        if (config["model"].get("architecture") == "synbrain" and
+        if (config["model"].get("architecture") == "ppbe" and
                 ((checkpoint_dir / "last.pt").exists() or (checkpoint_dir / "best.pt").exists())):
             raise FileExistsError(f"BrainVAE checkpoints already exist in {run_dir}; use --resume or a new run_name")
         checkpoint_dir.mkdir(parents=True, exist_ok=True)

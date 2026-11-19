@@ -198,7 +198,7 @@ def queue(subjects,poll,device):
         immutable(OUT/'queue_identity.json',identity)
         if poll:
             from types import SimpleNamespace
-            from wait_gpu_clip_to_synbrain import wait_for_idle
+            from wait_gpu_clip_to_ppbe import wait_for_idle
             q.state(status='waiting_for_gpu',stage=None,error=None)
             uuid=wait_for_idle(SimpleNamespace(gpu_index=0,max_used_mib=1024,max_utilization=5,poll_seconds=poll,idle_confirm_seconds=30,confirm_poll_seconds=10))
             os.environ['CUDA_VISIBLE_DEVICES']=uuid

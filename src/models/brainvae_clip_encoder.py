@@ -1,4 +1,4 @@
-"""Original SynBrain encoder + mean projector, trained only against CLIP tokens.
+"""Original PPBE encoder + mean projector, trained only against CLIP tokens.
 
 No fMRI decoder, log-variance branch, posterior sampling, KL, or prediction head.
 SDPA preserves the original single-head attention equation and parameter keys.
@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from torch.utils.checkpoint import checkpoint
 
 from src.models.brainvae import _token_mlp, soft_clip_loss
-from src.models.synbrain_blocks import AttnBlock, NeuroEncoder, nonlinearity
+from src.models.ppbe_blocks import AttnBlock, NeuroEncoder, nonlinearity
 
 
 class SDPAAttnBlock(AttnBlock):

@@ -4,10 +4,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.data.scheme1 import resolve_path, validate_tag
+from src.utils.config import brainvae_architecture
 
 
 def training_identity(config: dict, max_steps: int = 0, max_val_steps: int = 0) -> dict:
     identity = {key: config[key] for key in ("model", "training", "validation", "preprocessing", "data_tag")}
+    if "architecture" in identity["model"]:
+        identity["model"] = {**identity["model"], "architecture": brainvae_architecture(identity["model"])}
     # Saving frequency is operational, not a learning parameter. Changing it
     # must not move a run or invalidate an otherwise compatible resume.
     identity["training"] = {key: value for key, value in config["training"].items() if key != "checkpoint_every_steps"}

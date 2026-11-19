@@ -21,7 +21,7 @@ def load_expdesign(path: Path) -> dict:
     return spio.loadmat(path, squeeze_me=True, struct_as_record=False)
 
 
-def build_synbrain_split(expdesign: dict, subject: int, sessions: int) -> tuple[list[int], list[int], dict[int, list[int]], dict[int, list[int]]]:
+def build_ppbe_split(expdesign: dict, subject: int, sessions: int) -> tuple[list[int], list[int], dict[int, list[int]], dict[int, list[int]]]:
     subjectim = expdesign["subjectim"]
     masterordering = np.asarray(expdesign["masterordering"]).reshape(-1)
     num_trials = sessions * 750
@@ -107,7 +107,7 @@ def load_captions(annots_path: Path, image_ids: list[int]) -> np.ndarray:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build the fixed SynBrain-style NSD perception fMRI/id/caption files.")
+    parser = argparse.ArgumentParser(description="Build the fixed PPBE-style NSD perception fMRI/id/caption files.")
     parser.add_argument("--paths", default="configs/paths.example.yaml")
     parser.add_argument("--subject", type=int, required=True)
     parser.add_argument("--sessions", type=int, default=40)
@@ -131,7 +131,7 @@ def main() -> None:
     out_dir = paths.nsd_root / f"subj{subject:02d}"
 
     design = load_expdesign(expdesign)
-    train_ids, test_ids, train_trials, test_trials = build_synbrain_split(design, subject, args.sessions)
+    train_ids, test_ids, train_trials, test_trials = build_ppbe_split(design, subject, args.sessions)
     mask = nib.load(str(mask_path)).get_fdata() > 0
 
     print(f"Subject {subject}")
@@ -150,7 +150,7 @@ def main() -> None:
             f"  Subject {subject} only has {loaded_sessions} sessions on disk "
             f"(requested {args.sessions}); recomputing the train/test split for {loaded_sessions} sessions."
         )
-        train_ids, test_ids, train_trials, test_trials = build_synbrain_split(design, subject, loaded_sessions)
+        train_ids, test_ids, train_trials, test_trials = build_ppbe_split(design, subject, loaded_sessions)
 
     train_fmri, kept_train_ids = gather_by_image(fmri_by_trial, train_ids, train_trials, expected_reps=3)
     test_fmri, kept_test_ids = gather_by_image(fmri_by_trial, test_ids, test_trials, expected_reps=3)

@@ -25,6 +25,8 @@ __pycache__/
 *.bin
 *.tar
 *.png
+!/docs/images/graphical-abstract.png
+!/docs/images/architecture.png
 *.jpg
 *.jpeg
 *.webp

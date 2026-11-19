@@ -147,7 +147,7 @@ def retrieval(cfg,exp,source,device):
     from torch.utils.data import DataLoader,Subset
     from src.data.nsd_sdxl_features import NSDImageDataset,find_stimuli_hdf5
     from src.utils.clip_mapping import load_mapping_config
-    from prepare_nsd_perception_fmri import load_expdesign,build_synbrain_split
+    from prepare_nsd_perception_fmri import load_expdesign,build_ppbe_split
     identity=require_identity(cfg,exp,source)
     split=json.loads((exp/'protocol/split.json').read_text())
     _,_,paths=load_mapping_config(source['config_path'],ROOT)
@@ -205,7 +205,7 @@ def retrieval(cfg,exp,source,device):
         for row in group:row['source_row']=int(candidate_indices[row['source_row']])
     groups=teacher_image_split(groups,cfg['seed'],cfg['teacher_val_fraction'])
     design=load_expdesign(paths.raw_nsd_root/'nsddata/experiments/nsd/nsd_expdesign.mat')
-    _,_,trial_lookup,_=build_synbrain_split(design,cfg['subject'],40)
+    _,_,trial_lookup,_=build_ppbe_split(design,cfg['subject'],40)
     for group in groups:
         for row in group:
             raw_trials=sorted(trial_lookup[row['image_id']])[:repeats]
@@ -245,12 +245,12 @@ def load_frozen(cfg,source,device,sdpa=False):
     from src.models.clip_mapping import build_clip_mapper
     from src.utils.clip_mapping import MAPPING_PROTOCOL,frozen_brain,load_mapping_config
     from src.utils.clip_head_evaluation import load_trained_head_source
-    from src.utils.synbrain_training import configure_synbrain_execution
+    from src.utils.ppbe_training import configure_ppbe_execution
     head_cfg,brain_cfg,paths=load_mapping_config(source['config_path'],ROOT)
     checkpoint,loaded,protocol=load_trained_head_source(source['checkpoint'],head_cfg,brain_cfg,ROOT,
                                                         cfg['subject'],MAPPING_PROTOCOL)
     brain=frozen_brain(loaded,device)
-    if sdpa:configure_synbrain_execution(brain,{'attention_backend':'sdpa'})
+    if sdpa:configure_ppbe_execution(brain,{'attention_backend':'sdpa'})
     mapper=build_clip_mapper(checkpoint['config']).to(device).eval().requires_grad_(False)
     mapper.load_state_dict(checkpoint['model'],strict=True)
     del checkpoint,loaded
@@ -384,7 +384,7 @@ def make_adapter(cfg,voxels,device):
 
 def code_fingerprint():
     files=['scripts/run_imagery_w010_pilot.py','src/utils/imagery_w010_pilot.py',
-           'src/models/imagery_adapter.py','src/models/brainvae_synbrain.py','src/models/synbrain_blocks.py',
+           'src/models/imagery_adapter.py','src/models/brainvae_ppbe.py','src/models/ppbe_blocks.py',
            'src/models/clip_mapping.py','src/models/adatoken_refinement.py','src/s2n/sit.py',
            'src/utils/mapping_precision.py','scripts/decode_brainvae_scheme1.py',
            'scripts/decode_synthesised_fmri_unclip.py','scripts/eval_scheme1_reconstruction.py',

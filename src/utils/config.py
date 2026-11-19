@@ -6,6 +6,12 @@ from typing import Any
 import yaml
 
 
+def brainvae_architecture(config: dict[str, Any]) -> str:
+    architecture = config.get("architecture", "project")
+    # Accept the previous architecture tag in saved model configurations.
+    return "ppbe" if architecture == "syn" "brain" else architecture
+
+
 def load_yaml(path: str | Path) -> dict[str, Any]:
     path = Path(path)
     with path.open("r", encoding="utf-8") as handle:

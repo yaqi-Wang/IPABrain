@@ -42,7 +42,7 @@ from train_brainvae_scheme1 import capture_rng_state, restore_rng_state
 
 
 TARGET_DIR = ROOT / 'output_1104/nsd_subj01/sdxl_clip_l11_all_both_v1'
-SOURCE_CONFIG = ROOT / 'configs/clip_mapping_synbrain_local_adatoken.yaml'
+SOURCE_CONFIG = ROOT / 'configs/clip_mapping_ppbe_local_adatoken.yaml'
 FORMAL_ROOT = ROOT / 'output_1104/nsd_subj01/text_prediction'
 DEBUG_ROOT = ROOT / 'output_1104/debug/text_prediction'
 TARGET_REPRESENTATION = 'sdxl_clip_l_hidden_states_11_pre_final_layernorm_unprojected'

@@ -1,4 +1,4 @@
-brainvae_config: configs/brainvae_scheme1_synbrain.yaml
+brainvae_config: configs/brainvae_scheme1_ppbe.yaml
 run_name: adatoken_semantic_w010_v2
 output_root: outputs/adatoken_refinement/semantic_v2
 log_root: logs/adatoken_semantic_v2/w010
@@ -25,7 +25,7 @@ training:
   checkpoint_every_steps: 500
   num_workers: 0
   encode_batch_size: 2
-  initialize_from: outputs/synbrain_comparison/subj01/runs/adatoken_synbrain_local/checkpoints/best.pt
+  initialize_from: outputs/ppbe_comparison/subj01/runs/adatoken_ppbe_local/checkpoints/best.pt
   drop_last: true
 validation:
   selection_metric: token_mse
@@ -46,7 +46,7 @@ evaluation:
   rgb_mode: standard
   token_source_tag: nsd250_s1
   generation_tag: nsd250_s1
-mean_cache_directory: outputs/synbrain_comparison/subj01/runs/tokenformer_synbrain_local/features
+mean_cache_directory: outputs/ppbe_comparison/subj01/runs/tokenformer_ppbe_local/features
 objective:
   type: generation_contrastive
   weight: 0.01

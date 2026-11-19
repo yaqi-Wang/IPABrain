@@ -93,42 +93,42 @@ def initialize(cfg, experiment):
                     raise ValueError(f'Generated config changed: {name}')
             return saved
     configs, subjects = {}, {}
-    template = yaml.safe_load((ROOT / 'configs/clip_mapping_synbrain_local_adatoken.yaml').read_text())
+    template = yaml.safe_load((ROOT / 'configs/clip_mapping_ppbe_local_adatoken.yaml').read_text())
     semantic = yaml.safe_load((ROOT / 'configs/clip_mapping_adatoken_semantic_w010.yaml').read_text())
     for subject in cfg['subjects']:
         folder = experiment / f'subj{subject:02d}'
         generated = folder / 'configs'
         generated.mkdir(parents=True, exist_ok=True)
         if subject == 1:
-            brain_config = ROOT / 'configs/brainvae_scheme1_synbrain.yaml'
-            brain_weight = ROOT / 'outputs_new/baselines/brainvae_synbrain_local/subj01/checkpoints/best.pt'
-            source_kind = 'local_synbrain'
+            brain_config = ROOT / 'configs/brainvae_scheme1_ppbe.yaml'
+            brain_weight = ROOT / 'outputs_new/baselines/brainvae_ppbe_local/subj01/checkpoints/best.pt'
+            source_kind = 'local_ppbe'
         elif subject in range(3, 8):
-            brain_config = ROOT / f'outputs_new/synbrain_multisubject_v1/configs/subj{subject:02d}.yaml'
-            brain_weight = ROOT / f'outputs_new/synbrain_multisubject_v1/subj{subject:02d}/runs/brainvae_synbrain_local_fast_v1/checkpoints/best.pt'
-            source_kind = 'local_synbrain'
+            brain_config = ROOT / f'outputs_new/ppbe_multisubject_v1/configs/subj{subject:02d}.yaml'
+            brain_weight = ROOT / f'outputs_new/ppbe_multisubject_v1/subj{subject:02d}/runs/brainvae_ppbe_local_fast_v1/checkpoints/best.pt'
+            source_kind = 'local_ppbe'
         else:
-            raw = yaml.safe_load((ROOT / 'configs/brainvae_synbrain_multisubject_fast.yaml').read_text())
+            raw = yaml.safe_load((ROOT / 'configs/brainvae_ppbe_multisubject_fast.yaml').read_text())
             raw.update(output_root=str(experiment / 'stage1'), log_root=str(experiment / 'logs/stage1'))
             brain_config = generated / 'brainvae.yaml'
             write_yaml(raw, brain_config)
             configs[str(brain_config)] = file_sha256(brain_config)
             if subject == 2:
-                brain_weight = ROOT / 'checkpoints/synbrain_author/subj02/brainvae.pth'
-                source_kind = 'synbrain_author'
+                brain_weight = ROOT / 'checkpoints/ppbe_author/subj02/brainvae.pth'
+                source_kind = 'ppbe_author'
             else:
                 brain_cfg, _ = load_scheme1_config(brain_config, ROOT)
                 brain_weight = training_directory(brain_cfg, ROOT, subject) / 'checkpoints/best.pt'
-                source_kind = 'local_synbrain_to_train'
+                source_kind = 'local_ppbe_to_train'
                 if not cfg['train_missing_subj08'] and not brain_weight.is_file():
-                    raise FileNotFoundError('Subject 08 needs a matching SynBrain Stage1; the legacy project VAE is a different model')
+                    raise FileNotFoundError('Subject 08 needs a matching PPBE Stage1; the legacy project VAE is a different model')
         common = {'brainvae_config': str(brain_config), 'brainvae_checkpoint': str(brain_weight),
                   'output_root': str(experiment), 'log_root': str(experiment / 'logs'),
                   'mean_cache_directory': str(folder / 'features')}
         if subject == 2:
-            common.update(brainvae_source='synbrain_external', external_source={
+            common.update(brainvae_source='ppbe_external', external_source={
                 'subject': subject, 'author_model_config': '',
-                'origin': 'user_provided_SynBrain_Stage1',
+                'origin': 'user_provided_PPBE_Stage1',
                 'training_data_provenance': 'author_checkpoint_not_fully_audited'})
         base = copy.deepcopy(template)
         base.pop('mean_cache_run', None)

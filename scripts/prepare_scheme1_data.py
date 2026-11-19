@@ -16,7 +16,7 @@ from _bootstrap import add_project_root
 ROOT = add_project_root()
 
 from prepare_imagery_nsd import decode_trials
-from prepare_nsd_perception_fmri import build_synbrain_split, load_expdesign
+from prepare_nsd_perception_fmri import build_ppbe_split, load_expdesign
 from src.data.scheme1 import (PROTOCOL, FMRIStandardizer, check_disjoint, data_directory,
                               digest_json, file_sha256, file_signature, read_imagery_roi_xyz,
                               image_split, load_prepared, load_scheme1_config)
@@ -26,7 +26,7 @@ def verify_source_sample(raw_root: Path, subject: int, source_ids: np.ndarray,
                          grouped_fmri: np.ndarray, mask: np.ndarray, stored_divisor: float) -> dict:
     """Check scale AND the full voxel ordering against a raw perception trial."""
     design = load_expdesign(raw_root / "nsddata/experiments/nsd/nsd_expdesign.mat")
-    _, _, lookup, _ = build_synbrain_split(design, subject, sessions=40)
+    _, _, lookup, _ = build_ppbe_split(design, subject, sessions=40)
     trial = min(lookup[int(source_ids[0])])
     session = trial // 750 + 1
     frame = trial % 750

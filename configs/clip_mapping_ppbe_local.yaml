@@ -1,29 +1,23 @@
-# Local original-compatible SynBrain mean -> SiT/AdaLN-Zero -> raw CLIP tokens.
-brainvae_config: configs/brainvae_scheme1_synbrain.yaml
-mean_cache_run: tokenformer_synbrain_local
-run_name: adatoken_synbrain_local
-output_root: outputs/synbrain_comparison
-log_root: logs/clip_mapping_synbrain_local_adatoken
+brainvae_config: configs/brainvae_scheme1_ppbe.yaml
+run_name: tokenformer_ppbe_local
+output_root: outputs/ppbe_comparison
+log_root: logs/clip_mapping_ppbe_local
 model:
-  type: adatoken
+  type: tokenformer
   latent_tokens: 256
   embed_dim: 1664
+  hidden_dim: 512
   depth: 8
-  num_heads: 13
+  num_heads: 8
   mlp_ratio: 4.0
-  fused_attn: true
-  qk_norm: false
-  gradient_checkpointing: true
+  dropout: 0.1
 training:
   seed: 42
   batch_size: 12
-  micro_batch_size: 3
-  mixed_precision: fp16
-  allow_tf32: true
   epochs: 30
   learning_rate: 0.0001
   weight_decay: 0.01
-  checkpoint_every_steps: 500
+  checkpoint_every_steps: 100
   num_workers: 0
   encode_batch_size: 2
 validation:
